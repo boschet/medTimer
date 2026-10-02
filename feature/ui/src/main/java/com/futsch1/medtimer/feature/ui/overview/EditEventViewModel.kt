@@ -3,11 +3,13 @@ package com.futsch1.medtimer.feature.ui.overview
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futsch1.medtimer.core.common.di.ApplicationScope
 import com.futsch1.medtimer.core.common.helpers.TimeHelper
 import com.futsch1.medtimer.core.domain.model.ReminderEvent
 import com.futsch1.medtimer.core.domain.repository.ReminderEventRepository
 import com.futsch1.medtimer.core.ui.TimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +29,7 @@ class EditEventViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val reminderEventRepository: ReminderEventRepository,
     private val timeFormatter: TimeFormatter,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     companion object {
@@ -129,8 +132,12 @@ class EditEventViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Called when the sheet is dismissed, right before it is removed and this ViewModel is cleared,
+     * so the save runs in the application scope to complete regardless.
+     */
     fun updateEvent() {
-        viewModelScope.launch {
+        applicationScope.launch {
             val event = storedEvent ?: return@launch
             val remindedTimestamp =
                 computeTimestamp(event.remindedTimestamp, _remindedMinutes.value, _remindedDate.value)
